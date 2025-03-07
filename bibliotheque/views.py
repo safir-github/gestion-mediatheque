@@ -67,23 +67,24 @@ def liste_medias(request):
             membre_id = request.POST.get('membre_id')
             membre = get_object_or_404(Membre, id=membre_id)
 
-            if media.disponible:
-                Emprunt.objects.create(membre=membre, media=media)
-                media.disponible = False
-                media.save()
+            # Utilisation de la méthode emprunter_media pour gérer l'emprunt
+            success, message = Emprunt.emprunter_media(membre, media)
+
+            if success:
+                messages.success(request, message)
+            else:
+                messages.error(request, message)
 
         elif action == "rendre":
-            emprunt = Emprunt.objects.filter(media=media).first()
-            if emprunt:
-                media.disponible = True
-                media.save()
-                emprunt.date_retour = now()
-                emprunt.save()
-                emprunt.delete()
+            # Utilisation de la méthode rendre_media pour gérer le retour
+            success, message = Emprunt.rendre_media(media)
+
+            if success:
+                messages.success(request, message)
+            else:
+                messages.error(request, message)
 
     return render(request, 'bibliotheque/liste_medias.html', {'medias': medias, 'membres': Membre.objects.all()})
-
-
 
 
 
@@ -98,60 +99,42 @@ def emprunter_media(request):
             messages.error(request, "Données manquantes.")
             return redirect('liste_medias')
 
-        media = get_object_or_404(Media, id=media_id, disponible=True)
-        membre = get_object_or_404(Membre, id=membre_id)
+        # Utilisation de la méthode emprunter_media dans Emprunt
+        success, message = Emprunt.emprunter_media(membre_id, media_id)
 
-        # ✅ Vérification 1 : Bloquer les jeux de plateau
-        if "jeu" in media.type.lower():
-            messages.error(request, "Les jeux de plateau ne peuvent pas être empruntés.")
-            return redirect('liste_medias')
+        # Affichage du message selon le résultat de l'emprunt
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
 
-        # ✅ Vérification 2 : Limite de 3 emprunts par membre
-        if Emprunt.objects.filter(membre=membre, date_retour__isnull=True).count() >= 3:
-            messages.error(request, "Ce membre a déjà atteint la limite de 3 emprunts.")
-            return redirect('liste_medias')
-
-        # ✅ Vérification 3 : Emprunts en retard
-        date_limite = timezone.now() - timedelta(days=7)
-        emprunts_actifs = Emprunt.objects.filter(membre=membre, date_retour__isnull=True)
-        if emprunts_actifs.filter(date_emprunt__lte=date_limite).exists():
-            messages.error(request, "Ce membre a un emprunt en retard et ne peut pas emprunter.")
-            return redirect('liste_medias')
-
-        # ✅ Créer l'emprunt et mettre à jour le statut du média
-        Emprunt.objects.create(membre=membre, media=media)
-        media.disponible = False
-        media.save()
-
-        messages.success(request, f"{media.titre} a été emprunté avec succès.")
         return redirect('liste_medias')
 
     return redirect('liste_medias')
 
 
 
-def rendre_media(request, media_id):
-    media = get_object_or_404(Media, id=media_id, disponible=False)
-    emprunt = Emprunt.objects.filter(media=media, date_retour__isnull=True).first()
 
-    if emprunt:
-        emprunt.date_retour = timezone.now()  # ✅ Marquer l’emprunt comme rendu
-        emprunt.save()
-        media.disponible = True  # ✅ Rendre le média disponible à nouveau
-        media.save()
-        messages.success(request, f"{media.titre} a été rendu avec succès.")
+
+
+def rendre_media(request, media_id):
+    # Utiliser l'id du média, pas l'objet complet
+    success, message = Emprunt.rendre_media(media_id)
+
+    if success:
+        messages.success(request, message)
+    else:
+        messages.error(request, message)
 
     return redirect('liste_medias')
 
 
 
-def verifier_emprunts_en_retard():
-    date_limite = timezone.now() - timedelta(days=7)
-    emprunts_en_retard = Emprunt.objects.filter(date_retour__isnull=True, date_emprunt__lte=date_limite)
+def verifier_emprunts_en_retard_view(request):
+    Emprunt.verifier_emprunts_en_retard()  # Appel de la méthode dans le modèle
 
-    for emprunt in emprunts_en_retard:
-        emprunt.membre.bloque = True  # ✅ Bloquer le membre
-        emprunt.membre.save()
+    messages.success(request, "Tous les emprunts en retard ont été vérifiés et les membres bloqués si nécessaire.")
+    return redirect('liste_medias')
 
 
 
@@ -159,14 +142,15 @@ def ajouter_media(request):
     if request.method == 'POST':
         form = MediaForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('liste_medias')  # Redirige vers la liste des médias après l'ajout
+            form.save()  # Sauvegarde du média
+            messages.success(request, "Le média a été ajouté avec succès.")  # Message de confirmation
+            return redirect('liste_medias')  # Redirection vers la liste des médias après l'ajout
+        else:
+            messages.error(request, "Il y a eu une erreur lors de l'ajout du média.")  # Message d'erreur
     else:
-        form = MediaForm()
+        form = MediaForm()  # Créer un formulaire vide pour la vue GET
 
     return render(request, 'bibliotheque/ajouter_media.html', {'form': form})
-
-
 
 
 
