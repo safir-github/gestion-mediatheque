@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Membres</title>
+</head>
+<body>
+    <h1>Liste des Membres</h1>
+    <ul>
+      {% for membre in membres %}
+        <li>
+          {{ membre.nom }} - {{ membre.email }}
+          {% if membre.bloque %}
+            (Bloqué)
+          {% endif %}
+                  <a href="{% url 'modifier_membre' membre.id %}">Modifier</a>
+
+        </li>
+      {% empty %}
+        <li>Aucun membre enregistré.</li>
+      {% endfor %}
+    </ul>
+
+    <a href="{% url 'ajouter_membre' %}">➕ Ajouter un membre</a>
+    <a href="{% url 'liste_medias' %}">Retour à la gestion des médias</a>
+</body>
+</html>

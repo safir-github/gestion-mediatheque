@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Médias</title>
+</head>
+<body>
+
+{% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+
+{% block content %}
+
+
+
+    <h2>Gestions des emprunts et des retours</h2>
+
+    <ul>
+        {% for media in medias %}
+            <li>
+                {{ media.titre }} - {{ media.type }}
+
+                {% if media.disponible %}
+                    <!-- Bouton pour emprunter -->
+                    <form method="post" action="{% url 'emprunter_media' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="emprunter">
+                        <input type="hidden" name="media_id" value="{{ media.id }}">
+                        <select name="membre_id">
+                            {% for membre in membres %}
+                                <option value="{{ membre.id }}">{{ membre.nom }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit">📥 Emprunter</button>
+                    </form>
+                   {% else %}
+                    <!-- Affichage de "Emprunté" + Bouton Rendre -->
+                    <span class="emprunte">🔒 Emprunté 🔒</span>
+                    <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="rendre">
+                        <input type="hidden" name="media_id" value="{{ media.id }}">
+                        <button type="submit">🔄 Rendre</button>
+                    </form>
+                {% endif %}
+
+
+            </li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'ajouter_media' %}">➕ Ajouter un média</a>
+    <a href="{% url 'liste_membres' %}">Gestions des membres</a>
+    <a href="{% url 'accueil' %}">Retour à l'accueil</a>
+
+
+
+
+
+
+{% endblock %}
+
+
+
+
+</body>
+</html>

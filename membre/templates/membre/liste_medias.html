@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Médias</title>
+</head>
+<body>
+
+{% block content %}
+    <h1>Bienvenue !</h1>
+    <h2>Voici la liste des Médias</h2>
+
+    <ul>
+        {% for media in medias %}
+            <li>
+                {{ media.titre }} - {{ media.type }}
+                {% if media.disponible %}
+                    <span>✅ Disponible</span>
+                {% else %}
+                    <span>🔒 Emprunté</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'liste_medias' %}">Gérer les emprunts et les retours</a>
+
+{% endblock %}
+
+</body>
+</html>
