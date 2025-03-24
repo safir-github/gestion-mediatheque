@@ -1,12 +1,8 @@
-
-from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.utils.timezone import now
-from datetime import timedelta
-from .models import Membre
-from .forms import MembreForm, MediaForm, EmpruntForm
-from .models import Media, Emprunt
+from .forms import MembreForm, MediaForm
+from .models import Media, Emprunt, Membre
+
 
 
 
@@ -127,6 +123,8 @@ def rendre_media(request, media_id):
         messages.error(request, message)
 
     return redirect('liste_medias')
+
+
 
 
 

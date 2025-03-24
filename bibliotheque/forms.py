@@ -7,23 +7,13 @@ class MembreForm(forms.ModelForm):
         fields = ['nom', 'email', 'bloque']
 
 
-
 class MediaForm(forms.ModelForm):
     class Meta:
         model = Media
         fields = ['titre', 'type', 'disponible']
 
 
-
-
 class EmpruntForm(forms.ModelForm):
     class Meta:
         model = Emprunt
         fields = ['membre', 'media']
-
-
-
-class MembreForm(forms.ModelForm):
-    class Meta:
-        model = Membre
-        fields = ['nom', 'email', 'bloque']

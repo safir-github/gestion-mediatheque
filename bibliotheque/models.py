@@ -2,7 +2,6 @@
 from django.db import models
 from django.utils.timezone import now
 from django.utils import timezone
-from django.shortcuts import get_object_or_404
 from datetime import timedelta
 
 
@@ -80,6 +79,27 @@ class Emprunt(models.Model):
 
     @staticmethod
     def emprunter_media(membre, media):
+        print(f"DEBUG: membre reçu = {membre} ({type(membre)})")  # 🟢 Debug
+        print(f"DEBUG: media reçu = {media} ({type(media)})")  # 🟢 Debug
+
+        # ✅ Si membre est un ID (str ou int), récupérer l'objet Membre
+        if isinstance(membre, str) or isinstance(membre, int):
+            try:
+                membre = Membre.objects.get(id=int(membre))
+                print(f"DEBUG: Conversion réussie, membre = {membre}")  # 🟢 Debug
+            except Membre.DoesNotExist:
+                print("❌ ERREUR: Membre introuvable.")  # 🛑 Debug
+                return False, "Ce membre n'existe pas."
+
+        # ✅ Si media est un ID (str ou int), récupérer l'objet Media
+        if isinstance(media, str) or isinstance(media, int):
+            try:
+                media = Media.objects.get(id=int(media))
+                print(f"DEBUG: Conversion réussie, media = {media}")  # 🟢 Debug
+            except Media.DoesNotExist:
+                print("❌ ERREUR: Media introuvable.")  # 🛑 Debug
+                return False, "Ce média n'existe pas."
+
         # ✅ Vérification 1 : Bloquer les jeux de plateau
         if "jeu" in media.type.lower():
             return False, "Les jeux de plateau ne peuvent pas être empruntés."
@@ -100,46 +120,42 @@ class Emprunt(models.Model):
         media.save()
 
         return True, f"{media.titre} a été emprunté avec succès."
-
     @staticmethod
     def rendre_media(media_id):
-        media = get_object_or_404(Media, id=media_id, disponible=False)
-        emprunt = Emprunt.objects.filter(media=media, date_retour__isnull=True).first()
+        print(f"DEBUG: media_id reçu = {media_id} ({type(media_id)})")
+
+        # Vérifier que media_id est bien un entier
+        if isinstance(media_id, Media):
+            print("❌ ERREUR: media_id est un objet Media, conversion en ID...")
+            media_id = media_id.id  # ✅ Extraire l'ID si c'est un objet Media
+
+        if not isinstance(media_id, int) and not str(media_id).isdigit():
+            print("❌ ERREUR: media_id n'est pas un entier valide.")  # 🛑 Debug
+            return False, "ID du média invalide."
+
+        media_id = int(media_id)  # Assurer que c'est bien un entier
+
+        try:
+            media = Media.objects.get(id=media_id, disponible=False)
+            print(f"DEBUG: Media trouvé = {media}")  # 🟢 Debug
+        except Media.DoesNotExist:
+            print("DEBUG: Media introuvable ou déjà disponible.")  # 🟠 Debug
+            return False, "Ce média n'existe pas ou est déjà disponible."
+
+        emprunt = Emprunt.objects.filter(media_id=media_id, date_retour__isnull=True).first()
 
         if emprunt:
-            emprunt.date_retour = timezone.now()  # ✅ Marquer l’emprunt comme rendu
+            print(f"DEBUG: Emprunt trouvé pour {media.titre}")  # 🟢 Debug
+            emprunt.date_retour = timezone.now()
             emprunt.save()
-            media.disponible = True  # ✅ Rendre le média disponible à nouveau
-            media.save()
-
-            return True, f"{media.titre} a été rendu avec succès."
-        else:
-            return False, "Aucun emprunt trouvé pour ce média."
-
-    @classmethod
-    def rendre_media(cls, media_id):
-
-        print(f"media_id reçu : {media_id} (type: {type(media_id)})")  # Debug
-
-        # Vérifier si media_id est un entier
-        if not isinstance(media_id, int):
-            try:
-                media_id = int(media_id)  # Forcer la conversion si nécessaire
-            except ValueError:
-                return False, "ID du média invalide."
-
-
-        # Récupérer le média et vérifier son état
-        media = get_object_or_404(Media, id=media_id, disponible=False)
-        emprunt = Emprunt.objects.filter(media=media, date_retour__isnull=True).first()
-
-        if emprunt:
-            emprunt.date_retour = timezone.now()  # Marquer l’emprunt comme rendu
-            emprunt.save()
-            media.disponible = True  # Rendre le média disponible à nouveau
+            media.disponible = True
             media.save()
             return True, f"{media.titre} a été rendu avec succès."
+
+        print("DEBUG: Aucun emprunt actif trouvé.")
         return False, "Aucun emprunt actif trouvé pour ce média."
+
+
 
     @classmethod
     def verifier_emprunts_en_retard(cls):
