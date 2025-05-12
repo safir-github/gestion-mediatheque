@@ -8,7 +8,7 @@
 <body>
 
 {% block content %}
-    <h1>Bienvenue !</h1>
+    <h1>Bienvenue Visiteur !</h1>
     <h2>Voici la liste des Médias</h2>
 
     <ul>
@@ -22,9 +22,10 @@
                 {% endif %}
             </li>
         {% endfor %}
-    </ul>
+    </ul>  
 
-    <a href="{% url 'liste_medias' %}">Gérer les emprunts et les retours</a>
+
+     <a href="{% url 'accueil' %}">Retour à l'accueil</a>
 
 {% endblock %}
 
