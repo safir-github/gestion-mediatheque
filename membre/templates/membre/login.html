@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion</title>
+</head>
+<body>
+    <h2>Connexion</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+
+
+    <hr>
+
+    <p>Administrateur ? Accédez directement à l'interface :</p>
+    <a href="/bibliotheque/medias">
+        <button>Accéder à l'administration</button>
+    </a>
+
+    <hr>
+
+    <p>Pas administrateur ? Accédez à l'espace membre directement :</p>
+    <a href="{% url 'home_for_member' %}">
+        <button>Accéder à l'application Membre</button>
+    </a>
+</body>
+</html>

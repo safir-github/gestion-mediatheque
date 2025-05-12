@@ -3,7 +3,18 @@ from django.db import models
 from django.utils.timezone import now
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.auth.models import AbstractUser
 
+
+class CustomUser(AbstractUser):
+    ROLE_CHOICES = (
+        ('bibliothecaire', 'Bibliothécaire'),
+        ('emprunteur', 'Emprunteur'),
+    )
+    role = models.CharField(max_length=15, choices=ROLE_CHOICES, default='emprunteur')
+
+    def is_bibliothecaire(self):
+        return self.role == 'bibliothecaire'
 
 
 class Membre(models.Model):
