@@ -14,8 +14,14 @@
           {% if membre.bloque %}
             (Bloqué)
           {% endif %}
-                  <a href="{% url 'modifier_membre' membre.id %}">Modifier</a>
 
+          <!-- Lien pour modifier -->
+          <a href="{% url 'modifier_membre' membre.id %}">✏️ Modifier</a>
+
+          <!-- Lien pour supprimer -->
+          <a href="{% url 'supprimer_membre' membre.id %}" onclick="return confirm('Supprimer ce membre ?');">
+              🗑 Supprimer
+          </a>
         </li>
       {% empty %}
         <li>Aucun membre enregistré.</li>

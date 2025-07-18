@@ -18,8 +18,8 @@
 
     <hr>
 
-    <p>Administrateur ? Accédez directement à l'interface :</p>
-    <a href="/bibliotheque/medias">
+    <p>Administrateur ? Se connecter</p>
+    <a href="{% url 'login_biblio' %}?next={% url 'liste_medias' %}">
         <button>Accéder à l'administration</button>
     </a>
 
