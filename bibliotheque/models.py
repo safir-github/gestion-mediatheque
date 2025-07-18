@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.contrib.auth.models import AbstractUser
 
 
+
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
         ('bibliothecaire', 'Bibliothécaire'),
@@ -29,25 +30,16 @@ class Membre(models.Model):
 
 
 class Media(models.Model):
-    TYPE_CHOICES = [
-        ('Livre', 'Livre'),
-        ('DVD', 'DVD'),
-        ('CD', 'CD'),
-        ('JeuDePlateau', 'Jeu de Plateau'),
-    ]
-
     titre = models.CharField(max_length=255)
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     disponible = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.titre} ({self.type})"
+        return self.titre
 
     def emprunter(self, membre):
-        """ Méthode pour emprunter un média """
         if not self.disponible:
             return False, "Ce média est déjà emprunté."
-        if "jeu" in self.type.lower():
+        if isinstance(self, JeuDePlateau):
             return False, "Les jeux de plateau ne peuvent pas être empruntés."
 
         Emprunt.objects.create(membre=membre, media=self)
@@ -56,7 +48,6 @@ class Media(models.Model):
         return True, "Emprunt réussi."
 
     def rendre(self):
-        """ Méthode pour rendre un média """
         emprunt = Emprunt.objects.filter(media=self).first()
         if not emprunt:
             return False, "Ce média n'est pas emprunté."
@@ -67,6 +58,42 @@ class Media(models.Model):
         emprunt.save()
         emprunt.delete()
         return True, "Retour réussi."
+
+
+class Livre(Media):
+    auteur = models.CharField(max_length=255)
+    isbn = models.CharField(max_length=13, blank=True, null=True)
+
+    def __str__(self):
+        return f"Livre : {self.titre} par {self.auteur}"
+
+
+class DVD(Media):
+    realisateur = models.CharField(max_length=255, blank=True, null=True)
+    duree = models.PositiveIntegerField(help_text="Durée en minutes", blank=True, null=True)
+
+    def __str__(self):
+        return f"DVD : {self.titre} par {self.realisateur}"
+
+
+class CD(Media):
+    artiste = models.CharField(max_length=255, blank=True, null=True)
+    nombre_pistes = models.PositiveIntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return f"CD : {self.titre} de {self.artiste}"
+
+
+class JeuDePlateau(Media):
+    nombre_joueurs = models.PositiveIntegerField(blank=True, null=True)
+    duree_estimee = models.DurationField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Jeu de plateau : {self.titre} ({self.nombre_joueurs} joueurs)"
+
+
+
+
 
 
 
@@ -112,7 +139,7 @@ class Emprunt(models.Model):
                 return False, "Ce média n'existe pas."
 
         # ✅ Vérification 1 : Bloquer les jeux de plateau
-        if "jeu" in media.type.lower():
+        if isinstance(media, JeuDePlateau):
             return False, "Les jeux de plateau ne peuvent pas être empruntés."
 
         # ✅ Vérification 2 : Limite de 3 emprunts par membre

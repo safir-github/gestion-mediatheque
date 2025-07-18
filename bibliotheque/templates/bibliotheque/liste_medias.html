@@ -15,63 +15,58 @@
     </ul>
 {% endif %}
 
+<h1>Bienvenue Admin !</h1>
+<h2>Gestions des emprunts et des retours</h2>
 
-{% block content %}
+<ul>
+    {% for media in medias %}
+        <li>
+            {{ media.titre }} - {{ media.type }}
 
+            {% if media.disponible %}
+                <!-- Bouton pour emprunter -->
+                <form method="post" action="{% url 'emprunter_media' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="emprunter">
+                    <input type="hidden" name="media_id" value="{{ media.id }}">
+                    <select name="membre_id">
+                        {% for membre in membres %}
+                            <option value="{{ membre.id }}">{{ membre.nom }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">📥 Emprunter</button>
+                </form>
+            {% else %}
+                <!-- Affichage de "Emprunté" + Bouton Rendre -->
+                <span class="emprunte">🔒 Emprunté 🔒</span>
+                <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="rendre">
+                    <input type="hidden" name="media_id" value="{{ media.id }}">
+                    <button type="submit">🔄 Rendre</button>
+                </form>
+            {% endif %}
 
+            <!-- Bouton de suppression -->
+            <a href="{% url 'supprimer_media' media.id %}" onclick="return confirm('Confirmer la suppression ?');">
+                <button type="button">🗑 Supprimer</button>
+            </a>
+        </li>
+    {% endfor %}
+</ul>
 
+<div class="navigation">
+    <p><strong>Ajouter un média :</strong></p>
+    <a href="{% url 'ajouter_media' 'livre' %}"><button>📚 Livre</button></a>
+    <a href="{% url 'ajouter_media' 'cd' %}"><button>💿 CD</button></a>
+    <a href="{% url 'ajouter_media' 'dvd' %}"><button>📀 DVD</button></a>
+    <a href="{% url 'ajouter_media' 'jeu' %}"><button>🎲 Jeu</button></a>
 
+    <hr>
 
-    <h1>Bienvenue Admin !</h1>
-    <h2>Gestions des emprunts et des retours</h2>
-
-    <ul>
-        {% for media in medias %}
-            <li>
-                {{ media.titre }} - {{ media.type }}
-
-                {% if media.disponible %}
-                    <!-- Bouton pour emprunter -->
-                    <form method="post" action="{% url 'emprunter_media' %}" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="emprunter">
-                        <input type="hidden" name="media_id" value="{{ media.id }}">
-                        <select name="membre_id">
-                            {% for membre in membres %}
-                                <option value="{{ membre.id }}">{{ membre.nom }}</option>
-                            {% endfor %}
-                        </select>
-                        <button type="submit">📥 Emprunter</button>
-                    </form>
-                   {% else %}
-                    <!-- Affichage de "Emprunté" + Bouton Rendre -->
-                    <span class="emprunte">🔒 Emprunté 🔒</span>
-                    <form method="post" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="rendre">
-                        <input type="hidden" name="media_id" value="{{ media.id }}">
-                        <button type="submit">🔄 Rendre</button>
-                    </form>
-                {% endif %}
-
-
-            </li>
-        {% endfor %}
-    </ul>
-
-    <a href="{% url 'ajouter_media' %}">➕ Ajouter un média</a>
-    <a href="{% url 'liste_membres' %}">Gestions des membres</a>
-    <a href="{% url 'accueil' %}">Retour à l'accueil</a>
-
-
-
-
-
-
-{% endblock %}
-
-
-
+    <a href="{% url 'liste_membres' %}"><button>👥 Gérer les membres</button></a>
+    <a href="{% url 'accueil' %}"><button>🏠 Accueil</button></a>
+</div>
 
 </body>
 </html>

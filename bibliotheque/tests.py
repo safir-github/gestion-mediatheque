@@ -1,5 +1,5 @@
 from django.test import TestCase
-from .models import Membre, Media, Emprunt
+from .models import Membre, Media, Emprunt, Livre, DVD
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.messages import get_messages
@@ -61,11 +61,10 @@ class MembreUpdateTests(TestCase):
 
 
 class ListeMediasTests(TestCase):
-
     def test_afficher_liste_medias(self):
-        # Créer des médias
-        Media.objects.create(titre="Livre A", type="Livre", disponible=True)
-        Media.objects.create(titre="DVD B", type="DVD", disponible=False)
+        # Créer des médias via leurs sous-classes
+        Livre.objects.create(titre="Livre A", disponible=True)
+        DVD.objects.create(titre="DVD B", disponible=False)
 
         # Accéder à la liste des médias
         response = self.client.get(reverse('liste_medias'))
@@ -73,9 +72,10 @@ class ListeMediasTests(TestCase):
         # Vérifier que la page s'affiche correctement
         self.assertEqual(response.status_code, 200)
 
-        # Vérifier que les médias sont bien présents dans le contexte
+        # Vérifier que les médias sont bien affichés
         self.assertContains(response, "Livre A")
         self.assertContains(response, "DVD B")
+
 
 
 
@@ -84,7 +84,7 @@ class EmpruntTests(TestCase):
     def setUp(self):
         """Initialisation des données de test."""
         self.membre = Membre.objects.create(nom="Ali", email="ali@example.com", bloque=False)
-        self.media = Media.objects.create(titre="Livre X", type="Livre", disponible=True)
+        self.media = Livre.objects.create(titre="Livre X", disponible=True)
 
     def test_creer_emprunt_media_disponible(self):
         """Vérifie qu'un média disponible peut être emprunté."""
@@ -141,19 +141,64 @@ class MediaTests(TestCase):
         # Créer un média à ajouter
         media_data = {
             'titre': 'Livre X',
-            'type': 'Livre',
             'disponible': True
         }
 
         # Effectuer la requête POST
-        response = self.client.post(reverse('ajouter_media'), media_data)
+        response = self.client.post(reverse('ajouter_media', args=['livre']), media_data)
 
         # Vérifier que la redirection a eu lieu vers la liste des médias
         self.assertEqual(response.status_code, 302)  # Attendre une redirection (code 302)
 
         # Vérifier que le média a bien été ajouté
-        self.assertEqual(Media.objects.count(), 1)
-        self.assertEqual(Media.objects.first().titre, 'Livre X')
+        self.assertEqual(Livre.objects.count(), 1)
+        self.assertEqual(Livre.objects.first().titre, 'Livre X')
+
+
+
+
+
+class SousClasseMediaTest(TestCase):
+    def test_creation_livre(self):
+        livre = Livre.objects.create(
+            titre="1984",
+            auteur="George Orwell",
+            isbn="1234567890123",
+            disponible=True
+        )
+
+        # Vérifie que le livre est une instance de Livre
+        self.assertIsInstance(livre, Livre)
+
+        # Vérifie que le livre est aussi une instance de Media (héritage)
+        self.assertIsInstance(livre, Media)
+
+        # Vérifie que les données sont bien enregistrées
+        self.assertEqual(livre.titre, "1984")
+        self.assertTrue(livre.disponible)
+
+
+
+
+class MediaTests(TestCase):
+    def setUp(self):
+        self.livre = Livre.objects.create(titre="Test Livre")
+
+    def test_suppression_media(self):
+        response = self.client.get(reverse('supprimer_media', args=[self.livre.id]))
+        self.assertRedirects(response, reverse('liste_medias'))
+        self.assertFalse(Media.objects.filter(id=self.livre.id).exists())
+
+
+
+class MembreTests(TestCase):
+    def setUp(self):
+        self.membre = Membre.objects.create(nom="Alice", email="alice@example.com")
+
+    def test_suppression_membre(self):
+        response = self.client.get(reverse('supprimer_membre', args=[self.membre.id]))
+        self.assertRedirects(response, reverse('liste_membres'))
+        self.assertFalse(Membre.objects.filter(id=self.membre.id).exists())
 
 
 
